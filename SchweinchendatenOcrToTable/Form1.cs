@@ -1,5 +1,3 @@
-using Tesseract;
-
 namespace SchweinchendatenOcrToTable
 {
     public partial class Form1 : Form
@@ -22,34 +20,13 @@ namespace SchweinchendatenOcrToTable
             }
         }
 
-        private void btnProcess_Click(object sender, EventArgs e)
+        private async void btnProcess_Click(object sender, EventArgs e)
         {
-            if (string.IsNullOrEmpty(_imagePath))
-            {
-                MessageBox.Show("Please upload an image first.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                return;
-            }
+            AzureFormRecognizer azureFormRecognizer = new AzureFormRecognizer();
+            ImageCompressor imageCompressor = new ImageCompressor();
+            var compressedImagePath = imageCompressor.CompressImage(_imagePath);
 
-            using (var engine = new TesseractEngine(@"./tessdata", "eng", EngineMode.Default))
-            {
-                using (var img = Pix.LoadFromFile(_imagePath))
-                {
-                    using (var page = engine.Process(img))
-                    {
-                        string text = page.GetText();
-
-                        // You might need more sophisticated logic for parsing table and fractional numbers
-                        string[] lines = text.Split(new[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries);
-                        using (StreamWriter sw = new StreamWriter("output.csv"))
-                        {
-                            foreach (var line in lines)
-                            {
-                                sw.WriteLine(line.Replace("\t", ","));
-                            }
-                        }
-                    }
-                }
-            }
+            await azureFormRecognizer.ProcessImage(compressedImagePath);
 
             MessageBox.Show("Processing complete!", "Info", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
